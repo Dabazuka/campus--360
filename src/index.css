@@ -1,0 +1,253 @@
+/* ==========================================================================
+   1. RESET & BASE STYLES
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  background-color: #f1f5f9;
+  color: #1e293b;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   2. FLEXBOX & LAYOUT SYSTEM
+   ========================================================================== */
+.min-h-screen { min-height: 100vh; }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-1 { flex: 1 1 0%; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+
+/* Gaps */
+.gap-1 { gap: 0.25rem; }
+.gap-1\.5 { gap: 0.375rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+
+/* Spacing Containers */
+.space-y-1\.5 > * + * { margin-top: 0.375rem; }
+.space-y-2 > * + * { margin-top: 0.5rem; }
+.space-y-3 > * + * { margin-top: 0.75rem; }
+.space-y-4 > * + * { margin-top: 1rem; }
+.space-y-6 > * + * { margin-top: 1.5rem; }
+
+/* Sizing & Widths */
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.h-16 { height: 4rem; }
+.h-2\.5 { height: 0.625rem; }
+.h-10 { height: 2.5rem; }
+.w-10 { width: 2.5rem; }
+.h-14 { height: 3.5rem; }
+.w-14 { width: 3.5rem; }
+
+.max-w-md { max-width: 28rem; }
+.max-w-7xl { max-width: 80rem; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+/* Positioning */
+.relative { position: relative; }
+.sticky { position: sticky; }
+.top-0 { top: 0; }
+.top-3 { top: 0.75rem; }
+.left-3\.5 { left: 0.875rem; }
+.z-30 { z-index: 30; }
+
+/* ==========================================================================
+   3. PADDING & MARGIN UTILITIES
+   ========================================================================== */
+.p-1 { padding: 0.25rem; }
+.p-2 { padding: 0.5rem; }
+.p-2\.5 { padding: 0.625rem; }
+.p-3 { padding: 0.75rem; }
+.p-4 { padding: 1rem; }
+.p-5 { padding: 1.25rem; }
+.p-6 { padding: 1.5rem; }
+.p-8 { padding: 2rem; }
+
+.px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+.px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+.px-8 { padding-left: 2rem; padding-right: 2rem; }
+
+.py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+
+.pl-10 { padding-left: 2.5rem; }
+.pr-4 { padding-right: 1rem; }
+
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-1\.5 { margin-bottom: 0.375rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mt-0\.5 { margin-top: 0.125rem; }
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-6 { margin-top: 1.5rem; }
+.ml-3 { margin-left: 0.75rem; }
+
+/* ==========================================================================
+   4. BACKGROUND COLORS & BORDERS
+   ========================================================================== */
+.bg-white { background-color: #ffffff; }
+.bg-slate-50 { background-color: #f8fafc; }
+.bg-slate-100 { background-color: #f1f5f9; }
+.bg-slate-200 { background-color: #e2e8f0; }
+.bg-slate-800 { background-color: #1e293b; }
+.bg-slate-900 { background-color: #0f172a; }
+
+.bg-indigo-50 { background-color: #eef2ff; }
+.bg-indigo-600 { background-color: #4f46e5; }
+.bg-indigo-700 { background-color: #4338ca; }
+
+.bg-emerald-50 { background-color: #ecfdf5; }
+.bg-emerald-500 { background-color: #10b981; }
+
+.bg-amber-50 { background-color: #fffbeb; }
+.bg-amber-100 { background-color: #fef3c7; }
+
+.bg-rose-50 { background-color: #fff1f2; }
+.bg-rose-100 { background-color: #ffe4e6; }
+.bg-rose-500 { background-color: #f43f5e; }
+
+.bg-purple-600 { background-color: #9333ea; }
+.bg-blue-100 { background-color: #dbeafe; }
+
+/* Borders */
+.border { border: 1px solid #e2e8f0; }
+.border-b { border-bottom: 1px solid #e2e8f0; }
+.border-t { border-top: 1px solid #e2e8f0; }
+.border-slate-100 { border-color: #f1f5f9; }
+.border-slate-200 { border-color: #e2e8f0; }
+.border-indigo-100 { border-color: #e0e7ff; }
+.border-indigo-200 { border-color: #c7d2fe; }
+.border-rose-200 { border-color: #fecdd3; }
+
+/* Border Radius */
+.rounded { border-radius: 0.25rem; }
+.rounded-md { border-radius: 0.375rem; }
+.rounded-lg { border-radius: 0.5rem; }
+.rounded-xl { border-radius: 0.75rem; }
+.rounded-2xl { border-radius: 1rem; }
+.rounded-full { border-radius: 9999px; }
+.overflow-hidden { overflow: hidden; }
+
+/* Shadows */
+.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+.shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
+
+/* ==========================================================================
+   5. TYPOGRAPHY & TEXT COLORS
+   ========================================================================== */
+.text-white { color: #ffffff; }
+.text-slate-400 { color: #94a3b8; }
+.text-slate-500 { color: #64748b; }
+.text-slate-600 { color: #475569; }
+.text-slate-700 { color: #334155; }
+.text-slate-800 { color: #1e293b; }
+.text-slate-900 { color: #0f172a; }
+
+.text-indigo-600 { color: #4f46e5; }
+.text-indigo-700 { color: #4338ca; }
+.text-indigo-900 { color: #312e81; }
+
+.text-emerald-600 { color: #059669; }
+.text-amber-600 { color: #d97706; }
+.text-amber-800 { color: #92400e; }
+.text-rose-600 { color: #e11d48; }
+.text-rose-700 { color: #be123c; }
+.text-rose-800 { color: #9f1239; }
+.text-purple-600 { color: #9333ea; }
+.text-blue-600 { color: #2563eb; }
+.text-blue-800 { color: #1e40af; }
+
+.text-center { text-align: center; }
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-base { font-size: 1rem; line-height: 1.5rem; }
+.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; }
+
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.uppercase { text-transform: uppercase; }
+.capitalize { text-transform: capitalize; }
+.tracking-tight { letter-spacing: -0.025em; }
+.tracking-wider { letter-spacing: 0.05em; }
+.font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+/* ==========================================================================
+   6. INPUTS, BUTTONS & HOVER EFFECTS
+   ========================================================================== */
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: all 0.2s ease-in-out;
+}
+
+input, select, textarea {
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease-in-out;
+}
+
+input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: #4f46e5;
+}
+
+/* Hover States */
+.hover\:bg-slate-50:hover { background-color: #f8fafc; }
+.hover\:bg-slate-100:hover { background-color: #f1f5f9; }
+.hover\:bg-slate-900:hover { background-color: #0f172a; }
+.hover\:bg-indigo-700:hover { background-color: #4338ca; }
+.hover\:bg-rose-100:hover { background-color: #ffe4e6; }
+.hover\:text-rose-500:hover { color: #f43f5e; }
+
+/* Focus States */
+input:focus, select:focus, textarea:focus {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+
+/* ==========================================================================
+   7. GRID SYSTEM & RESPONSIVE DESIGN
+   ========================================================================== */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+
+@media (min-width: 640px) {
+  .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sm\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sm\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .sm\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+}
+
+@media (min-width: 768px) {
+  .md\:w-64 { width: 16rem; }
+  .md\:flex-row { flex-direction: row; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:px-8 { padding-left: 2rem; padding-right: 2rem; }
+}
