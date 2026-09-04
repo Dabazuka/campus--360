@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+const API_URL = 'https://campus-360-uvx3.onrender.com/';
 import {
   GraduationCap,
   Calendar,
@@ -327,7 +328,7 @@ export default function StudentPortal() {
   setLoginError('');
 
   try {
-    const response = await fetch('http://localhost:5000/api/auth/login', {
+    const response = await fetch(API_URL + '/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -389,7 +390,7 @@ const fetchStudentProfile = async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:5000/api/student/profile', {
+    const response = await fetch(API_URL + '/api/student/profile', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`
@@ -419,7 +420,7 @@ const fetchStudentSubjects = async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:5000/api/student/subjects', {
+    const response = await fetch(API_URL + '/api/student/subjects', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`
@@ -448,7 +449,7 @@ const fetchEvents = async () => {
 
   try {
     const response = await fetch(
-      'http://localhost:5000/api/events',
+      API_URL + '/api/events',
       {
         method: 'GET',
         headers: {
@@ -478,7 +479,7 @@ const fetchDoubts = async () => {
 
   try {
     const response = await fetch(
-      'http://localhost:5000/api/doubts',
+      API_URL + '/api/doubts',
       {
         method: 'GET',
         headers: {
@@ -509,7 +510,7 @@ const fetchComplaints = async () => {
 
   try {
     const response = await fetch(
-      'http://localhost:5000/api/complaints',
+      API_URL + '/api/complaints',
       {
         method: 'GET',
         headers: {
@@ -540,7 +541,7 @@ const fetchNotices = async () => {
 
   try {
     const response = await fetch(
-      'http://localhost:5000/api/notices',
+      API_URL + '/api/notices',
       {
         method: 'GET',
         headers: {
@@ -571,7 +572,7 @@ const fetchTeacherStudents = async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:5000/api/teacher/students', {
+    const response = await fetch(API_URL + '/api/teacher/students', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`
@@ -634,7 +635,7 @@ setStudentRecords(formattedStudents);
       : '';
 
     const response = await fetch(
-      'http://localhost:5000/api/events',
+      API_URL + '/api/events',
       {
         method: 'POST',
         headers: {
@@ -680,7 +681,7 @@ setStudentRecords(formattedStudents);
 
   try {
     const response = await fetch(
-      `http://localhost:5000/api/events/${id}`,
+      `${API_URL}/api/events/${id}`,
       {
         method: 'DELETE',
         headers: {
@@ -720,7 +721,7 @@ setStudentRecords(formattedStudents);
 
   try {
     const response = await fetch(
-      'http://localhost:5000/api/notices',
+      API_URL + '/api/notices',
       {
         method: 'POST',
         headers: {
@@ -781,7 +782,7 @@ setStudentRecords(formattedStudents);
     }
 
     const response = await fetch(
-      'http://localhost:5000/api/doubts',
+      API_URL + '/api/doubts',
       {
         method: 'POST',
         headers: {
@@ -830,7 +831,7 @@ setStudentRecords(formattedStudents);
 
   try {
     const response = await fetch(
-      `http://localhost:5000/api/doubts/${doubtId}/replies`,
+      `${API_URL}/api/doubts/${doubtId}/replies`,
       {
         method: 'POST',
         headers: {
@@ -881,7 +882,7 @@ setStudentRecords(formattedStudents);
 
   try {
     const response = await fetch(
-      `http://localhost:5000/api/doubts/${doubtId}`,
+      `${API_URL}/api/doubts/${doubtId}`,
       {
         method: 'DELETE',
         headers: {
@@ -921,7 +922,7 @@ setStudentRecords(formattedStudents);
 
   try {
     const response = await fetch(
-      'http://localhost:5000/api/complaints',
+      API_URL + '/api/complaints',
       {
         method: 'POST',
         headers: {
@@ -977,7 +978,7 @@ setStudentRecords(formattedStudents);
 
   try {
     const response = await fetch(
-      `http://localhost:5000/api/complaints/${complaintId}/status`,
+      `${API_URL}/api/complaints/${complaintId}/status`,
       {
         method: 'PATCH',
         headers: {
@@ -1016,7 +1017,7 @@ setStudentRecords(formattedStudents);
 
   try {
     const response = await fetch(
-      `http://localhost:5000/api/complaints/${id}`,
+      `${API_URL}/api/complaints/${id}`,
       {
         method: 'DELETE',
         headers: {
@@ -1071,7 +1072,7 @@ setStudentRecords(formattedStudents);
 
   try {
     const response = await fetch(
-      `http://localhost:5000/api/teacher/students/${studentId}`,
+      `${API_URL}/api/teacher/students/${studentId}`,
       {
         method: 'PUT',
         headers: {
@@ -1112,7 +1113,7 @@ setStudentRecords(formattedStudents);
 
   try {
     const response = await fetch(
-      'http://localhost:5000/api/teacher/students',
+      API_URL + '/api/teacher/students',
       {
         method: 'POST',
         headers: {
