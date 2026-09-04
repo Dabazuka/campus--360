@@ -23,8 +23,12 @@ router.get("/", authenticateToken, async (req, res) => {
       complaints = await db.orm.public.Complaint
         .where({ studentId: student.id })
         .all();
-    } else {
+        } else if (String(req.user.role).toUpperCase() === "TEACHER") {
       complaints = await db.orm.public.Complaint.all();
+    } else {
+      return res.status(403).json({
+        message: "Access denied"
+      });
     }
 
     const students = await db.orm.public.Student.all();
@@ -99,6 +103,12 @@ router.post("/", authenticateToken, async (req, res) => {
 
 // UPDATE complaint status
 router.patch("/:id/status", authenticateToken, async (req, res) => {
+  if (String(req.user.role).toUpperCase() !== "TEACHER") {
+  return res.status(403).json({
+    message: "Only teachers can update complaint status"
+  });
+}
+
   try {
     const complaintId = Number(req.params.id);
     const { status } = req.body;
@@ -150,16 +160,20 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     }
 
     if (String(req.user.role).toUpperCase() === "STUDENT") {
-      const student = await db.orm.public.Student.first({
-        userId: req.user.userId
-      });
+  const student = await db.orm.public.Student.first({
+    userId: req.user.userId
+  });
 
-      if (!student || complaint.studentId !== student.id) {
-        return res.status(403).json({
-          message: "You can only delete your own complaints"
-        });
-      }
-    }
+  if (!student || complaint.studentId !== student.id) {
+    return res.status(403).json({
+      message: "You can only delete your own complaints"
+    });
+  }
+} else if (String(req.user.role).toUpperCase() !== "TEACHER") {
+  return res.status(403).json({
+    message: "Access denied"
+  });
+}
 
     const deletedComplaint = await db.orm.public.Complaint
       .where({ id: complaintId })

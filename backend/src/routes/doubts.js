@@ -38,6 +38,12 @@ router.post("/", authenticateToken, async (req, res) => {
     const student = await db.orm.public.Student.first({
       userId: req.user.userId
     });
+    
+    if (!student) {
+        return res.status(404).json({
+          message: "Student profile not found"
+      });
+    }
 
     if (!subjectId || !question?.trim()) {
       return res.status(400).json({

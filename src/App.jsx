@@ -361,6 +361,7 @@ export default function StudentPortal() {
     setRole(data.user.role.toLowerCase());
 
     if (data.user.role === 'STUDENT') {
+      await fetchStudentSubjects();
       await fetchStudentProfile();
     }
 

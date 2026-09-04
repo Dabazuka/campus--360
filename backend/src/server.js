@@ -29,24 +29,6 @@ app.get("/", (req, res) => {
     });
 });
 
-app.get("/api/test-db", async (req, res) => {
-    try {
-        const users = await db.orm.public.User.all();
-
-        res.json({
-            success: true,
-            users
-        });
-    } catch (error) {
-        console.error(error);
-
-        res.status(500).json({
-            success: false,
-            message: "Database query failed"
-        });
-    }
-});
-
 app.get("/api/protected-test", authenticateToken, (req, res) => {
     res.json({
         message: "You accessed a protected route!",

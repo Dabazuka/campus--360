@@ -11,9 +11,9 @@ router.get("/", authenticateToken, async (req, res) => {
 
     const formattedNotices = notices.map((notice) => ({
       ...notice,
-    author: "Teacher / Faculty Admin",
-    date: notice.createdAt
-  }));
+      author: "Teacher / Faculty Admin",
+      date: notice.createdAt
+    }));
 
     res.json({ notices: formattedNotices });
   } catch (error) {
