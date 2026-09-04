@@ -269,15 +269,7 @@ export default function StudentPortal() {
   const sectionList = ['Sec-A', 'Sec-B', 'Sec-C', 'Sec-D', 'Sec-E', 'Sec-F', 'Sec-G', 'Sec-H', 'Sec-I', 'Sec-J', 'Sec-K', 'Sec-L', 'Sec-M', 'Sec-N', 'Sec-O'];
   const [selectedSectionFilter, setSelectedSectionFilter] = useState('Sec-A');
 
-  const [studentRecords, setStudentRecords] = useState([
-    { id: 'STU-101', name: 'John', section: 'Sec-A', classMarks: 72, assignmentSubmitted: true, yearlyCgpa: 8.4 },
-    { id: 'STU-102', name: 'Rohan Verma', section: 'Sec-A', classMarks: 94, assignmentSubmitted: true, yearlyCgpa: 9.3 },
-    { id: 'STU-103', name: 'Aarav Sharma', section: 'Sec-A', classMarks: 44, assignmentSubmitted: false, yearlyCgpa: 4.8 },
-    { id: 'STU-104', name: 'Pooja Nair', section: 'Sec-B', classMarks: 88, assignmentSubmitted: true, yearlyCgpa: 9.1 },
-    { id: 'STU-105', name: 'Vikas Kumar', section: 'Sec-B', classMarks: 58, assignmentSubmitted: true, yearlyCgpa: 6.2 },
-    { id: 'STU-106', name: 'Simran Kaur', section: 'Sec-C', classMarks: 38, assignmentSubmitted: false, yearlyCgpa: 4.1 },
-    { id: 'STU-107', name: 'Nikhil Saxena', section: 'Sec-O', classMarks: 91, assignmentSubmitted: true, yearlyCgpa: 9.4 },
-  ]);
+  const [studentRecords, setStudentRecords] = useState([]);
 
   const [newStudent, setNewStudent] = useState({ name: '', classMarks: 70, assignmentSubmitted: true, yearlyCgpa: 7.5 });
 
@@ -334,8 +326,23 @@ export default function StudentPortal() {
     : 0;  
   const pendingComplaintsCount = complaints.filter(c => c.status !== 'Resolved').length;
 
-  const loggedInStudent = studentRecords.find(s => s.id === currentStudentId) || studentRecords[0];
-  const loggedInZone = calculateRiskZone(loggedInStudent.classMarks, loggedInStudent.assignmentSubmitted, loggedInStudent.yearlyCgpa);
+  const loggedInStudent =
+  studentRecords.find(s => s.id === currentStudentId) ||
+  studentRecords[0] ||
+  {
+    id: currentStudentId,
+    name: 'Student',
+    section: 'Sec-A',
+    classMarks: 0,
+    assignmentSubmitted: false,
+    yearlyCgpa: 0
+  };
+
+  const loggedInZone = calculateRiskZone(
+    loggedInStudent.classMarks,
+    loggedInStudent.assignmentSubmitted,
+    loggedInStudent.yearlyCgpa
+  );
 
   const currentSectionStudents = studentRecords.filter(s => s.section === selectedSectionFilter);
   const sectionZoneCounts = currentSectionStudents.reduce((acc, stu) => {
@@ -377,8 +384,16 @@ export default function StudentPortal() {
     }
 
     setIsAuthenticated(true);
-    await fetchStudentProfile();
-    await fetchStudentSubjects();
+
+    if (data.user.role === 'STUDENT') {
+      await fetchStudentProfile();
+      await fetchStudentSubjects();
+    }
+
+    if (data.user.role === 'TEACHER') {
+      await fetchTeacherStudents();
+    }
+
     setActiveTab('dropout-tracker');
 
   } catch (error) {
@@ -470,7 +485,18 @@ const fetchTeacherStudents = async () => {
     }
 
     console.log('Students from database:', data.students);
-    setTeacherStudents(data.students);
+
+    const formattedStudents = data.students.map((student) => ({
+      id: student.id,
+      name: student.name,
+      section: student.section || 'Sec-A',
+      classMarks: student.classMarks ?? 0,
+      assignmentSubmitted: student.assignmentSubmitted ?? false,
+      yearlyCgpa: student.yearlyCgpa ?? 0
+    }));
+
+setTeacherStudents(formattedStudents);
+setStudentRecords(formattedStudents);
 
   } catch (error) {
     console.error('Failed to fetch students:', error);
@@ -582,17 +608,64 @@ const fetchTeacherStudents = async () => {
     setComplaints(complaints.filter(c => c.id !== id));
   };
 
-  const handleUpdateStudentMetric = (studentId, field, value) => {
-    setStudentRecords(studentRecords.map(stu => {
-      if (stu.id === studentId) {
-        return {
-          ...stu,
-          [field]: field === 'assignmentSubmitted' ? value : Number(value)
-        };
-      }
-      return stu;
-    }));
+  const handleUpdateStudentMetric = async (studentId, field, value) => {
+  const updatedValue =
+    field === 'assignmentSubmitted' ? value : Number(value);
+
+  setStudentRecords(studentRecords.map(stu => {
+    if (stu.id === studentId) {
+      return {
+        ...stu,
+        [field]: updatedValue
+      };
+    }
+
+    return stu;
+  }));
+
+  const student = studentRecords.find(stu => stu.id === studentId);
+
+  if (!student) {
+    return;
+  }
+
+  const updatedStudent = {
+    ...student,
+    [field]: updatedValue
   };
+
+  const token = localStorage.getItem('token');
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/teacher/students/${studentId}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          classMarks: updatedStudent.classMarks,
+          yearlyCgpa: updatedStudent.yearlyCgpa,
+          assignmentSubmitted: updatedStudent.assignmentSubmitted
+        })
+      }
+    );
+
+    const data = await response.json();
+
+      if (!response.ok) {
+        console.error(data.message || 'Failed to update student');
+        return;
+      }
+
+      console.log('Student updated in database:', data.student);
+
+    }   catch (error) {
+      console.error('Failed to update student:', error);
+    }
+  };  
 
   const handleCreateStudent = (e) => {
     e.preventDefault();
