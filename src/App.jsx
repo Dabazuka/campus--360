@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-const API_URL = 'https://campus-360-uvx3.onrender.com/';
+const API_URL = 'https://campus-360-uvx3.onrender.com';
 import {
   GraduationCap,
   Calendar,
