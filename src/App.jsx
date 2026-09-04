@@ -271,7 +271,15 @@ export default function StudentPortal() {
 
   const [studentRecords, setStudentRecords] = useState([]);
 
-  const [newStudent, setNewStudent] = useState({ name: '', classMarks: 70, assignmentSubmitted: true, yearlyCgpa: 7.5 });
+  const [newStudent, setNewStudent] = useState({
+    name: '',
+    studentId: '',
+    loginId: '',
+    password: '',
+    classMarks: '',
+    assignmentSubmitted: false,
+    yearlyCgpa: ''
+  });
 
   const calculateRiskZone = (marks, assignment, cgpa) => {
     if (cgpa >= 9.0) {
@@ -667,19 +675,62 @@ setStudentRecords(formattedStudents);
     }
   };  
 
-  const handleCreateStudent = (e) => {
-    e.preventDefault();
-    if (!newStudent.name.trim()) return;
-    const newEntry = {
-      id: `STU-${Math.floor(100 + Math.random() * 900)}`,
-      name: newStudent.name.trim(),
-      section: selectedSectionFilter,
-      classMarks: Number(newStudent.classMarks),
-      assignmentSubmitted: Boolean(newStudent.assignmentSubmitted),
-      yearlyCgpa: Number(newStudent.yearlyCgpa)
-    };
-    setStudentRecords([...studentRecords, newEntry]);
-    setNewStudent({ name: '', classMarks: 70, assignmentSubmitted: true, yearlyCgpa: 7.5 });
+  const handleCreateStudent = async (e) => {
+  e.preventDefault();
+
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    console.error('No authentication token found');
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      'http://localhost:5000/api/teacher/students',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          loginId: newStudent.loginId,
+          password: newStudent.password,
+          studentId: newStudent.studentId,
+          name: newStudent.name.trim(),
+          section: selectedSectionFilter,
+          classMarks: Number(newStudent.classMarks),
+          yearlyCgpa: Number(newStudent.yearlyCgpa),
+          assignmentSubmitted: Boolean(newStudent.assignmentSubmitted)
+        })
+      }
+    );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error(data.message || 'Failed to create student');
+        return;
+      }
+
+      console.log('Student created in database:', data.student);
+
+      await fetchTeacherStudents();
+
+      setNewStudent({
+        name: '',
+        studentId: '',
+        loginId: '',
+        password: '',
+        classMarks: '',
+        assignmentSubmitted: false,
+        yearlyCgpa: ''
+      });
+
+    } catch (error) {
+      console.error('Failed to create student:', error);
+    }
   };
 
   // VIEW 1: LOGIN SCREEN
@@ -984,7 +1035,7 @@ setStudentRecords(formattedStudents);
                       <UserPlus size={18} className="text-indigo-600" />
                       Add Student to <span className="text-indigo-600">{selectedSectionFilter}</span>
                     </h3>
-                    <form onSubmit={handleCreateStudent} className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                    <form onSubmit={handleCreateStudent} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       <input
                         type="text"
                         placeholder="Student Full Name"
@@ -993,6 +1044,33 @@ setStudentRecords(formattedStudents);
                         onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
                         className="p-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
                       />
+                        <input
+                          type="text"
+                          placeholder="Student ID"
+                          required
+                          value={newStudent.studentId}
+                          onChange={(e) => setNewStudent({ ...newStudent, studentId: e.target.value })}
+                          className="p-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+                        />
+
+                        <input
+                          type="text"
+                          placeholder="Login ID"
+                          required
+                          value={newStudent.loginId}
+                          onChange={(e) => setNewStudent({ ...newStudent, loginId: e.target.value })}
+                          className="p-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+                        />
+
+                      <input
+                        type="password"
+                        placeholder="Password"
+                        required
+                        value={newStudent.password}
+                        onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })}
+                        className="p-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600"
+                      />
+
                       <input
                         type="number"
                         placeholder="Marks (/100)"
