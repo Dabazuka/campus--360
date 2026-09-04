@@ -51,6 +51,17 @@ router.post("/", authenticateToken, async (req, res) => {
       });
     }
 
+    const studentSubject = await db.orm.public.StudentSubject.first({
+      studentId: student.id,
+      subjectId: Number(subjectId)
+    });
+
+  if (!studentSubject) {
+    return res.status(403).json({
+    message: "You are not enrolled in this subject"
+    });
+  }
+
     const doubt = await db.orm.public.Doubt.create({
       studentId: student.id,
       subjectId: Number(subjectId),
