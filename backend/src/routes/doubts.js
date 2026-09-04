@@ -74,6 +74,16 @@ router.post("/", authenticateToken, async (req, res) => {
 router.post("/:doubtId/replies", authenticateToken, async (req, res) => {
   try {
     const doubtId = Number(req.params.doubtId);
+    const doubt = await db.orm.public.Doubt.first({
+  id: doubtId
+});
+
+if (!doubt) {
+  return res.status(404).json({
+    message: "Doubt not found"
+  });
+}
+
     const { message } = req.body;
 
     if (!message?.trim()) {
