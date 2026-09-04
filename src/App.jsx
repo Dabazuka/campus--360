@@ -605,6 +605,8 @@ setStudentRecords(formattedStudents);
 };
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
+
     setIsAuthenticated(false);
     setLoginId('');
     setRole('');
