@@ -97,6 +97,34 @@ router.post("/students", authenticateToken, async (req, res) => {
             assignmentSubmitted
         } = req.body;
 
+        if (
+    !loginId ||
+    !password ||
+    !studentId ||
+    !name?.trim() ||
+    !section
+) {
+    return res.status(400).json({
+        message: "All student fields are required"
+    });
+}
+
+const marks = Number(classMarks);
+const cgpa = Number(yearlyCgpa);
+
+if (
+    !Number.isFinite(marks) ||
+    !Number.isFinite(cgpa) ||
+    marks < 0 ||
+    marks > 100 ||
+    cgpa < 0 ||
+    cgpa > 10
+) {
+    return res.status(400).json({
+        message: "Invalid marks or CGPA"
+    });
+}
+
         const passwordHash = await bcrypt.hash(password, 10);
 
         const user = await db.orm.public.User.create({
@@ -110,8 +138,8 @@ router.post("/students", authenticateToken, async (req, res) => {
             studentId,
             name,
             section,
-            classMarks: Number(classMarks),
-            yearlyCgpa: Number(yearlyCgpa),
+            classMarks: marks,
+            yearlyCgpa: cgpa,
             assignmentSubmitted: Boolean(assignmentSubmitted)
         });
 
