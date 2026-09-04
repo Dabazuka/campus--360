@@ -18,6 +18,12 @@ router.get("/", authenticateToken, async (req, res) => {
 
 // CREATE event
 router.post("/", authenticateToken, async (req, res) => {
+    if (String(req.user.role).toUpperCase() !== "TEACHER") {
+    return res.status(403).json({
+      message: "Only teachers can create events"
+    });
+  }
+
   try {
     const { title, date, time, type } = req.body;
 
@@ -41,6 +47,12 @@ router.post("/", authenticateToken, async (req, res) => {
 
 // DELETE event
 router.delete("/:id", authenticateToken, async (req, res) => {
+    if (String(req.user.role).toUpperCase() !== "TEACHER") {
+    return res.status(403).json({
+      message: "Only teachers can delete events"
+    });
+  }
+  
   try {
     const eventId = Number(req.params.id);
 

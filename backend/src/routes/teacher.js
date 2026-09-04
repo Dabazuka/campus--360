@@ -8,6 +8,12 @@ const router = express.Router();
 
 // GET all students
 router.get("/students", authenticateToken, async (req, res) => {
+    if (String(req.user.role).toUpperCase() !== "TEACHER") {
+    return res.status(403).json({
+        message: "Only teachers can view all students"
+    });
+}
+
     try {
         const students = await db.orm.public.Student.all();
 
@@ -27,6 +33,12 @@ router.get("/students", authenticateToken, async (req, res) => {
 
 // UPDATE student
 router.put("/students/:id", authenticateToken, async (req, res) => {
+    if (String(req.user.role).toUpperCase() !== "TEACHER") {
+  return res.status(403).json({
+    message: "Only teachers can update students"
+  });
+}
+
     try {
         const studentId = Number(req.params.id);
 
@@ -67,6 +79,12 @@ router.put("/students/:id", authenticateToken, async (req, res) => {
 
 // CREATE student
 router.post("/students", authenticateToken, async (req, res) => {
+    if (String(req.user.role).toUpperCase() !== "TEACHER") {
+  return res.status(403).json({
+    message: "Only teachers can create students"
+  });
+}
+
     try {
         const {
             loginId,

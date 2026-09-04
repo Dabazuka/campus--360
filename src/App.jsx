@@ -133,7 +133,7 @@ export default function StudentPortal() {
   const [loginError, setLoginError] = useState('');
   const [role, setRole] = useState('');
   const isTeacher = role === 'teacher';
-  const [currentStudentId, setCurrentStudentId] = useState('STU-101');
+  const [currentStudentId, setCurrentStudentId] = useState('');
   const [studentProfile, setStudentProfile] = useState(null);
   const [password, setPassword] = useState('');
 
@@ -207,34 +207,7 @@ export default function StudentPortal() {
     return () => clearInterval(timer);
   }, []);
 
-  const [complaints, setComplaints] = useState([
-    {
-      id: 1,
-      student: 'John',
-      section: 'Sec-B',
-      category: 'AC / Ventilation',
-      title: 'Back row AC unit not cooling and making loud noise',
-      description: 'Room 304 AC cooling coil seems dysfunctional since Monday.',
-      status: 'In Progress',
-      date: 'Yesterday',
-      createdAt: Date.now() - (2 * 3600 * 1000 + 15 * 60 * 1000 + 51 * 1000),
-      resolvedAt: null,
-      adminNote: 'Maintenance team notified. Technician assigned for inspection.'
-    },
-    {
-      id: 2,
-      student: 'Priya S.',
-      section: 'Sec-A',
-      category: 'Benches & Desks',
-      title: 'Broken desk wooden plank in 2nd row',
-      description: 'Sharp wooden edge on Desk 12 can cause injury to students.',
-      status: 'Resolved',
-      date: '3 days ago',
-      createdAt: Date.now() - 48 * 3600 * 1000,
-      resolvedAt: Date.now() - (48 * 3600 * 1000 - (3 * 3600 * 1000 + 42 * 60 * 1000)),
-      adminNote: 'Desk repaired and carpenter replaced top ply.'
-    }
-  ]);
+  const [complaints, setComplaints] = useState([]);
 
   const [newComplaint, setNewComplaint] = useState({
     student: '',
@@ -245,15 +218,18 @@ export default function StudentPortal() {
   });
 
   const formatDuration = (startTime, endTime) => {
-    const totalMs = Math.max(0, (endTime || currentTime) - startTime);
+    const start = new Date(startTime).getTime();
+    const end = endTime ? new Date(endTime).getTime() : currentTime;
+
+    const totalMs = Math.max(0, end - start);
     const totalSeconds = Math.floor(totalMs / 1000);
+
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
-
   // --- SECTION A TO O DROPOUT TRACKER STATE ---
   const sectionList = ['Sec-A', 'Sec-B', 'Sec-C', 'Sec-D', 'Sec-E', 'Sec-F', 'Sec-G', 'Sec-H', 'Sec-I', 'Sec-J', 'Sec-K', 'Sec-L', 'Sec-M', 'Sec-N', 'Sec-O'];
   const [selectedSectionFilter, setSelectedSectionFilter] = useState('Sec-A');
@@ -323,16 +299,13 @@ export default function StudentPortal() {
     : 0;  
   const pendingComplaintsCount = complaints.filter(c => c.status !== 'Resolved').length;
 
-  const loggedInStudent =
-  studentRecords.find(s => s.id === currentStudentId) ||
-  studentRecords[0] ||
-  {
-    id: currentStudentId,
-    name: 'Student',
-    section: 'Sec-A',
-    classMarks: 0,
-    assignmentSubmitted: false,
-    yearlyCgpa: 0
+  const loggedInStudent = studentProfile || {
+  id: '',
+  name: 'Student',
+  section: 'Sec-A',
+  classMarks: 0,
+  assignmentSubmitted: false,
+  yearlyCgpa: 0
   };
 
   const loggedInZone = calculateRiskZone(
@@ -377,20 +350,18 @@ export default function StudentPortal() {
     setRole(data.user.role.toLowerCase());
 
     if (data.user.role === 'STUDENT') {
-      setCurrentStudentId('STU-101');
-
-      fetchStudentProfile();
-      fetchStudentSubjects();
       fetchEvents();
       fetchNotices();
       fetchDoubts();
+      fetchComplaints();
     }
 
     setIsAuthenticated(true);
 
+    setRole(data.user.role.toLowerCase());
+
     if (data.user.role === 'STUDENT') {
       await fetchStudentProfile();
-      await fetchStudentSubjects();
     }
 
     if (data.user.role === 'TEACHER') {
@@ -398,6 +369,7 @@ export default function StudentPortal() {
       fetchEvents();
       fetchNotices();
       fetchDoubts();
+      fetchComplaints();
     }
 
     setActiveTab('dropout-tracker');
@@ -528,6 +500,37 @@ const fetchDoubts = async () => {
     console.error('Failed to fetch doubts:', error);
   }
 };
+
+const fetchComplaints = async () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) return;
+
+  try {
+    const response = await fetch(
+      'http://localhost:5000/api/complaints',
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to fetch complaints');
+      return;
+    }
+
+    console.log('Complaints from database:', data.complaints);
+    setComplaints(data.complaints);
+
+    } catch (error) {
+      console.error('Failed to fetch complaints:', error);
+    }
+  };
 
 const fetchNotices = async () => {
   const token = localStorage.getItem('token');
@@ -784,7 +787,6 @@ setStudentRecords(formattedStudents);
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          studentId: studentProfile?.id,
           subjectId: selectedSubject.id,
           question: newDoubt.question.trim()
         })
@@ -901,26 +903,49 @@ setStudentRecords(formattedStudents);
   };
 
   // --- COMPLAINT HANDLERS ---
-  const handleAddComplaint = (e) => {
-    e.preventDefault();
-    if (!newComplaint.title || !newComplaint.section || !newComplaint.description) return;
-    const now = Date.now();
-    setComplaints([
+  const handleAddComplaint = async (e) => {
+  e.preventDefault();
+
+  if (!newComplaint.title || !newComplaint.section || !newComplaint.description) {
+    return;
+  }
+
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    console.error('No authentication token found');
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      'http://localhost:5000/api/complaints',
       {
-        id: now,
-        student: newComplaint.student.trim() || loggedInStudent.name,
-        section: newComplaint.section,
-        category: newComplaint.category,
-        title: newComplaint.title,
-        description: newComplaint.description,
-        status: 'Pending',
-        date: 'Just now',
-        createdAt: now,
-        resolvedAt: null,
-        adminNote: 'Complaint registered. Under review by maintenance department.'
-      },
-      ...complaints
-    ]);
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          section: newComplaint.section,
+          category: newComplaint.category,
+          title: newComplaint.title.trim(),
+          description: newComplaint.description.trim()
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to create complaint');
+      return;
+    }
+
+    console.log('Complaint created in database:', data.complaint);
+
+    await fetchComplaints();
+
     setNewComplaint({
       student: '',
       section: '',
@@ -928,23 +953,90 @@ setStudentRecords(formattedStudents);
       title: '',
       description: ''
     });
+
+    } catch (error) {
+      console.error('Failed to create complaint:', error);
+    }
   };
 
-  const handleUpdateComplaintStatus = (complaintId, updatedStatus) => {
-    setComplaints(complaints.map(item => {
-      if (item.id === complaintId) {
-        return {
-          ...item,
-          status: updatedStatus,
-          resolvedAt: updatedStatus === 'Resolved' ? (item.resolvedAt || Date.now()) : null
-        };
+  const handleUpdateComplaintStatus = async (complaintId, updatedStatus) => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    console.error('No authentication token found');
+    return;
+  }
+
+  const statusMap = {
+    'Pending': 'PENDING',
+    'In Progress': 'IN_PROGRESS',
+    'Resolved': 'RESOLVED'
+  };
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/complaints/${complaintId}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: statusMap[updatedStatus]
+        })
       }
-      return item;
-    }));
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to update complaint status');
+      return;
+    }
+
+    console.log('Complaint status updated:', data.complaint);
+
+    await fetchComplaints();
+
+    } catch (error) {
+      console.error('Failed to update complaint status:', error);
+    }
   };
 
-  const handleDeleteComplaint = (id) => {
-    setComplaints(complaints.filter(c => c.id !== id));
+  const handleDeleteComplaint = async (id) => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    console.error('No authentication token found');
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/complaints/${id}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to delete complaint');
+      return;
+    }
+
+    console.log('Complaint deleted:', data.message);
+
+    await fetchComplaints();
+
+    } catch (error) {
+      console.error('Failed to delete complaint:', error);
+    }
   };
 
   const handleUpdateStudentMetric = async (studentId, field, value) => {
@@ -2152,7 +2244,7 @@ setStudentRecords(formattedStudents);
                                 </span>
                               )}
 
-                              {role === 'teacher' && (
+                              {(role === 'teacher' || role === 'student') && (
                                 <button
                                   onClick={() => handleDeleteComplaint(item.id)}
                                   className="text-slate-300 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition"

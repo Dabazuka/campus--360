@@ -33,16 +33,20 @@ router.get("/", authenticateToken, async (req, res) => {
 // CREATE a new doubt
 router.post("/", authenticateToken, async (req, res) => {
   try {
-    const { studentId, subjectId, question } = req.body;
+    const { subjectId, question } = req.body;
 
-    if (!studentId || !subjectId || !question?.trim()) {
+    const student = await db.orm.public.Student.first({
+      userId: req.user.userId
+    });
+
+    if (!subjectId || !question?.trim()) {
       return res.status(400).json({
         message: "Student, subject, and question are required"
       });
     }
 
     const doubt = await db.orm.public.Doubt.create({
-      studentId: Number(studentId),
+      studentId: student.id,
       subjectId: Number(subjectId),
       question: question.trim(),
       solved: false
@@ -91,6 +95,12 @@ router.post("/:doubtId/replies", authenticateToken, async (req, res) => {
 });
 
 router.delete("/:doubtId", authenticateToken, async (req, res) => {
+  if (String(req.user.role).toUpperCase() !== "TEACHER") {
+  return res.status(403).json({
+    message: "Only teachers can delete doubts"
+  });
+}
+
   try {
     const doubtId = Number(req.params.doubtId);
 

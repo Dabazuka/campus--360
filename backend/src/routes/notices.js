@@ -24,6 +24,12 @@ router.get("/", authenticateToken, async (req, res) => {
 
 // CREATE notice
 router.post("/", authenticateToken, async (req, res) => {
+  if (String(req.user.role).toUpperCase() !== "TEACHER") {
+    return res.status(403).json({
+      message: "Only teachers can create notices"
+    });
+  }
+
   try {
     const { title, category, description, urgent } = req.body;
 
@@ -47,6 +53,12 @@ router.post("/", authenticateToken, async (req, res) => {
 
 // DELETE notice
 router.delete("/:id", authenticateToken, async (req, res) => {
+  if (String(req.user.role).toUpperCase() !== "TEACHER") {
+    return res.status(403).json({
+      message: "Only teachers can delete notices"
+    });
+  }
+
   try {
     const noticeId = Number(req.params.id);
 
@@ -55,7 +67,9 @@ router.delete("/:id", authenticateToken, async (req, res) => {
       .delete();
 
     if (!deletedNotice) {
-      return res.status(404).json({ message: "Notice not found" });
+      return res.status(404).json({
+        message: "Notice not found"
+      });
     }
 
     res.json({
@@ -63,7 +77,9 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to delete notice" });
+    res.status(500).json({
+      message: "Failed to delete notice"
+    });
   }
 });
 

@@ -7,7 +7,26 @@ const router = express.Router();
 // GET all complaints
 router.get("/", authenticateToken, async (req, res) => {
   try {
-    const complaints = await db.orm.public.Complaint.all();
+    let complaints;
+
+    if (String(req.user.role).toUpperCase() === "STUDENT") {
+      const student = await db.orm.public.Student.first({
+        userId: req.user.userId
+      });
+
+      if (!student) {
+        return res.status(404).json({
+          message: "Student profile not found"
+        });
+      }
+
+      complaints = await db.orm.public.Complaint
+        .where({ studentId: student.id })
+        .all();
+    } else {
+      complaints = await db.orm.public.Complaint.all();
+    }
+
     const students = await db.orm.public.Student.all();
 
     const formattedComplaints = complaints.map((complaint) => {
@@ -35,21 +54,30 @@ router.get("/", authenticateToken, async (req, res) => {
 router.post("/", authenticateToken, async (req, res) => {
   try {
     const {
-      studentId,
       section,
       category,
       title,
       description
     } = req.body;
 
-    if (!studentId || !section || !category || !title?.trim() || !description?.trim()) {
+    if (!section || !category || !title?.trim() || !description?.trim()) {
       return res.status(400).json({
         message: "All complaint fields are required"
       });
     }
 
+    const student = await db.orm.public.Student.first({
+      userId: req.user.userId
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student profile not found"
+      });
+    }
+
     const complaint = await db.orm.public.Complaint.create({
-      studentId: Number(studentId),
+      studentId: student.id,
       section,
       category,
       title: title.trim(),
@@ -65,6 +93,85 @@ router.post("/", authenticateToken, async (req, res) => {
     console.error(error);
     res.status(500).json({
       message: "Failed to create complaint"
+    });
+  }
+});
+
+// UPDATE complaint status
+router.patch("/:id/status", authenticateToken, async (req, res) => {
+  try {
+    const complaintId = Number(req.params.id);
+    const { status } = req.body;
+
+    if (!["PENDING", "IN_PROGRESS", "RESOLVED"].includes(status)) {
+      return res.status(400).json({
+        message: "Invalid complaint status"
+      });
+    }
+
+    const complaint = await db.orm.public.Complaint
+      .where({ id: complaintId })
+      .update({
+        status,
+        resolvedAt: status === "RESOLVED" ? new Date() : null
+      });
+
+    if (!complaint) {
+      return res.status(404).json({
+        message: "Complaint not found"
+      });
+    }
+
+    res.json({
+      message: "Complaint status updated successfully",
+      complaint
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to update complaint status"
+    });
+  }
+});
+
+// DELETE complaint
+router.delete("/:id", authenticateToken, async (req, res) => {
+  try {
+    const complaintId = Number(req.params.id);
+
+    const complaint = await db.orm.public.Complaint.first({
+      id: complaintId
+    });
+
+    if (!complaint) {
+      return res.status(404).json({
+        message: "Complaint not found"
+      });
+    }
+
+    if (String(req.user.role).toUpperCase() === "STUDENT") {
+      const student = await db.orm.public.Student.first({
+        userId: req.user.userId
+      });
+
+      if (!student || complaint.studentId !== student.id) {
+        return res.status(403).json({
+          message: "You can only delete your own complaints"
+        });
+      }
+    }
+
+    const deletedComplaint = await db.orm.public.Complaint
+      .where({ id: complaintId })
+      .delete();
+
+    res.json({
+      message: "Complaint deleted successfully"
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to delete complaint"
     });
   }
 });
