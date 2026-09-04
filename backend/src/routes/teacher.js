@@ -43,17 +43,35 @@ router.put("/students/:id", authenticateToken, async (req, res) => {
         const studentId = Number(req.params.id);
 
         const {
-            classMarks,
-            yearlyCgpa,
-            assignmentSubmitted
-        } = req.body;
+    classMarks,
+    yearlyCgpa,
+    assignmentSubmitted
+} = req.body;
+
+const marks = Number(classMarks);
+const cgpa = Number(yearlyCgpa);
+
+if (
+    !Number.isFinite(marks) ||
+    !Number.isFinite(cgpa) ||
+    marks < 0 ||
+    marks > 100 ||
+    cgpa < 0 ||
+    cgpa > 10
+) {
+    return res.status(400).json({
+        message: "Invalid marks or CGPA"
+    });
+}
+
+const updatedStudent =
 
         const updatedStudent =
             await db.orm.public.Student
                 .where({ id: studentId })
                 .update({
-                    classMarks: Number(classMarks),
-                    yearlyCgpa: Number(yearlyCgpa),
+                    classMarks: marks,
+                    yearlyCgpa: cgpa,
                     assignmentSubmitted: Boolean(assignmentSubmitted)
                 });
 
