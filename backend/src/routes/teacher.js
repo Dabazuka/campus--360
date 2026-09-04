@@ -97,6 +97,19 @@ router.post("/students", authenticateToken, async (req, res) => {
             assignmentSubmitted: Boolean(assignmentSubmitted)
         });
 
+        const subjects = await db.orm.public.Subject.all();
+
+        for (const subject of subjects) {
+            
+            await db.orm.public.StudentSubject.create({
+                studentId: student.id,
+                subjectId: subject.id,
+                classesAttended: 0,
+                classesTotal: 0,
+                grade: "N/A"
+            });
+        }
+
         res.status(201).json({
             message: "Student created successfully",
             student

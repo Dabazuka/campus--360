@@ -132,6 +132,7 @@ export default function StudentPortal() {
   const [loginId, setLoginId] = useState('');
   const [loginError, setLoginError] = useState('');
   const [role, setRole] = useState('');
+  const isTeacher = role === 'teacher';
   const [currentStudentId, setCurrentStudentId] = useState('STU-101');
   const [studentProfile, setStudentProfile] = useState(null);
   const [password, setPassword] = useState('');
@@ -396,6 +397,7 @@ export default function StudentPortal() {
       await fetchTeacherStudents();
       fetchEvents();
       fetchNotices();
+      fetchDoubts();
     }
 
     setActiveTab('dropout-tracker');
@@ -782,7 +784,7 @@ setStudentRecords(formattedStudents);
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          studentId: studentProfile.id,
+          studentId: studentProfile?.id,
           subjectId: selectedSubject.id,
           question: newDoubt.question.trim()
         })
@@ -798,7 +800,7 @@ setStudentRecords(formattedStudents);
 
     console.log('Doubt created in database:', data.doubt);
 
-    setDoubts([...doubts, data.doubt]);
+    await fetchDoubts();
 
     setNewDoubt({
       subject: 'Mechanical',
@@ -810,11 +812,92 @@ setStudentRecords(formattedStudents);
     }
   };
 
-  const handleAddReply = (doubtId) => {
-    const text = replyInput[doubtId];
-    if (!text || !text.trim()) return;
-    setDoubts(doubts.map(d => d.id === doubtId ? { ...d, replies: [...d.replies, text] } : d));
-    setReplyInput({ ...replyInput, [doubtId]: '' });
+  const handleAddReply = async (doubtId) => {
+  const text = replyInput[doubtId];
+
+  if (!text || !text.trim()) return;
+
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    console.error('No authentication token found');
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/doubts/${doubtId}/replies`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          message: text.trim()
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to add reply');
+      return;
+    }
+
+    setDoubts(
+      doubts.map((d) =>
+        d.id === doubtId
+          ? {
+              ...d,
+              replies: [...(d.replies || []), data.reply]
+            }
+          : d
+      )
+    );
+
+    setReplyInput({
+      ...replyInput,
+      [doubtId]: ''
+    });
+
+    } catch (error) {
+      console.error('Failed to add reply:', error);
+    }
+  };
+
+  const handleDeleteDoubt = async (doubtId) => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    console.error('No authentication token found');
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/doubts/${doubtId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to delete doubt');
+      return;
+    }
+
+    setDoubts(doubts.filter((doubt) => doubt.id !== doubtId));
+
+    } catch (error) {
+      console.error('Failed to delete doubt:', error);
+    }
   };
 
   // --- COMPLAINT HANDLERS ---
@@ -1856,12 +1939,20 @@ setStudentRecords(formattedStudents);
                           <CheckCircle size={14} /> Solved
                         </span>
                       )}
+                      {isTeacher && (
+                          <button
+                            onClick={() => handleDeleteDoubt(doubt.id)}
+                            className="text-xs text-red-600 hover:text-red-700 font-medium"
+                          >
+                          Delete
+                        </button>
+                      )}
                     </div>
 
                     <div className="space-y-2 border-t border-slate-100 pt-3">
                       {doubt.replies.map((reply, index) => (
                         <div key={index} className="bg-slate-50 p-2.5 rounded-lg text-xs text-slate-700">
-                          💬 {reply}
+                          💬 {typeof reply === 'string' ? reply : reply.message}
                         </div>
                       ))}
 

@@ -9,6 +9,7 @@ import teacherRouter from "./routes/teacher.js";
 import eventRoutes from "./routes/events.js";
 import noticeRoutes from "./routes/notices.js";
 import doubtRoutes from "./routes/doubts.js";
+import complaintRoutes from "./routes/complaints.js";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/api/teacher", teacherRouter);
 app.use("/api/events", eventRoutes);
 app.use("/api/notices", noticeRoutes);
 app.use("/api/doubts", doubtRoutes);
+app.use("/api/complaints", complaintRoutes);
 
 app.get("/", (req, res) => {
     res.json({

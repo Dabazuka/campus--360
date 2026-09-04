@@ -8,6 +8,20 @@ const router = express.Router();
 router.get("/", authenticateToken, async (req, res) => {
   try {
     const doubts = await db.orm.public.Doubt.all();
+    const students = await db.orm.public.Student.all();
+    const subjects = await db.orm.public.Subject.all();
+
+    for (const doubt of doubts) {
+      const student = students.find(s => s.id === doubt.studentId);
+      const subject = subjects.find(s => s.id === doubt.subjectId);
+
+      doubt.student = student?.name || "Unknown Student";
+      doubt.subject = subject?.name || "Unknown Subject";
+
+      doubt.replies = await db.orm.public.Reply
+        .where({ doubtId: doubt.id })
+        .all();
+    }
 
     res.json({ doubts });
   } catch (error) {
@@ -42,6 +56,65 @@ router.post("/", authenticateToken, async (req, res) => {
     console.error(error);
     res.status(500).json({
       message: "Failed to create doubt"
+    });
+  }
+});
+
+// CREATE a reply
+router.post("/:doubtId/replies", authenticateToken, async (req, res) => {
+  try {
+    const doubtId = Number(req.params.doubtId);
+    const { message } = req.body;
+
+    if (!message?.trim()) {
+      return res.status(400).json({
+        message: "Reply message is required"
+      });
+    }
+
+    const reply = await db.orm.public.Reply.create({
+      doubtId,
+      authorId: req.user.userId,
+      message: message.trim()
+    });
+
+    res.status(201).json({
+      message: "Reply added successfully",
+      reply
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to add reply"
+    });
+  }
+});
+
+router.delete("/:doubtId", authenticateToken, async (req, res) => {
+  try {
+    const doubtId = Number(req.params.doubtId);
+
+    await db.orm.public.Reply
+      .where({ doubtId })
+      .delete();
+
+    const deletedDoubt = await db.orm.public.Doubt
+      .where({ id: doubtId })
+      .delete();
+
+    if (!deletedDoubt) {
+      return res.status(404).json({
+        message: "Doubt not found"
+      });
+    }
+
+    res.json({
+      message: "Doubt deleted successfully"
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to delete doubt"
     });
   }
 });
