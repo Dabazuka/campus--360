@@ -133,17 +133,15 @@ export default function StudentPortal() {
   const [loginError, setLoginError] = useState('');
   const [role, setRole] = useState('');
   const [currentStudentId, setCurrentStudentId] = useState('STU-101');
+  const [studentProfile, setStudentProfile] = useState(null);
+  const [password, setPassword] = useState('');
 
   // --- APP NAVIGATION STATE ---
   const [activeTab, setActiveTab] = useState('dropout-tracker');
 
   // --- ATTENDANCE & ACADEMIC DATA ---
-  const [subjects] = useState([
-    { id: 1, name: 'Mechanical', attended: 26, total: 30, grade: 'A+' },
-    { id: 2, name: 'Electronics', attended: 22, total: 28, grade: 'A' },
-    { id: 3, name: 'Chemistry', attended: 25, total: 30, grade: 'B+' },
-    { id: 4, name: 'Mathematics', attended: 28, total: 32, grade: 'A' },
-  ]);
+  const [subjects, setSubjects] = useState([]);
+  const [teacherStudents, setTeacherStudents] = useState([]);
 
   // --- CALENDAR / EXAM SCHEDULE STATE ---
   const [events, setEvents] = useState([
@@ -330,7 +328,10 @@ export default function StudentPortal() {
 
   const totalAttended = subjects.reduce((acc, s) => acc + s.attended, 0);
   const totalClasses = subjects.reduce((acc, s) => acc + s.total, 0);
-  const overallAttendance = Math.round((totalAttended / totalClasses) * 100);
+
+  const overallAttendance = totalClasses > 0
+    ? Math.round((totalAttended / totalClasses) * 100)
+    : 0;  
   const pendingComplaintsCount = complaints.filter(c => c.status !== 'Resolved').length;
 
   const loggedInStudent = studentRecords.find(s => s.id === currentStudentId) || studentRecords[0];
@@ -344,23 +345,137 @@ export default function StudentPortal() {
   }, {});
 
   // --- LOGIN & LOGOUT HANDLERS ---
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (loginId.trim() === '1111') {
-      setRole('student');
-      setCurrentStudentId('STU-101');
-      setIsAuthenticated(true);
-      setActiveTab('dropout-tracker');
-      setLoginError('');
-    } else if (loginId.trim() === '2222') {
-      setRole('teacher');
-      setIsAuthenticated(true);
-      setActiveTab('dropout-tracker');
-      setLoginError('');
-    } else {
-      setLoginError('Invalid Login ID! Please use 1111 for Student or 2222 for Teacher.');
+  const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoginError('');
+
+  try {
+    const response = await fetch('http://localhost:5000/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        loginId: loginId.trim(),
+        password: password
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setLoginError(data.message || 'Login failed');
+      return;
     }
-  };
+
+    localStorage.setItem('token', data.token);
+
+    setRole(data.user.role.toLowerCase());
+
+    if (data.user.role === 'STUDENT') {
+      setCurrentStudentId('STU-101');
+    }
+
+    setIsAuthenticated(true);
+    await fetchStudentProfile();
+    await fetchStudentSubjects();
+    setActiveTab('dropout-tracker');
+
+  } catch (error) {
+    console.error(error);
+    setLoginError('Unable to connect to server');
+  }
+};
+
+const fetchStudentProfile = async () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:5000/api/student/profile', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to fetch student profile');
+      return;
+    }
+    
+    console.log('Student profile from database:', data.student);
+    setStudentProfile(data.student);
+
+  } catch (error) {
+    console.error('Failed to fetch student profile:', error);
+  }
+};
+
+const fetchStudentSubjects = async () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:5000/api/student/subjects', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to fetch subjects');
+      return;
+    }
+
+    console.log('Subjects from database:', data.subjects);
+    setSubjects(data.subjects);
+
+  } catch (error) {
+    console.error('Failed to fetch subjects:', error);
+  }
+};
+
+const fetchTeacherStudents = async () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:5000/api/teacher/students', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to fetch students');
+      return;
+    }
+
+    console.log('Students from database:', data.students);
+    setTeacherStudents(data.students);
+
+  } catch (error) {
+    console.error('Failed to fetch students:', error);
+  }
+};
 
   const handleLogout = () => {
     setIsAuthenticated(false);
@@ -515,12 +630,20 @@ export default function StudentPortal() {
               <div className="relative">
                 <Lock size={18} className="absolute left-3.5 top-3 text-slate-400" />
                 <input
-                  type="password"
+                  type="text"
                   placeholder="Enter your ID"
                   value={loginId}
                   onChange={(e) => setLoginId(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition"
                   autoFocus
+                />
+                
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-600 focus:bg-white transition"
                 />
               </div>
             </div>
@@ -575,7 +698,7 @@ export default function StudentPortal() {
             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
               <User size={16} className="text-indigo-600" />
               <span className="text-xs font-semibold capitalize text-slate-700">
-                Logged in: <span className="text-indigo-600 font-bold">{role === 'teacher' ? 'Faculty Admin' : loggedInStudent.name}</span>
+                Logged in: <span className="text-indigo-600 font-bold">{role === 'teacher' ? 'Faculty Admin' : studentProfile?.name}</span>
               </span>
             </div>
 
@@ -980,18 +1103,18 @@ export default function StudentPortal() {
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-4">
                       <CircularGauge
-                        score={loggedInStudent.classMarks}
+                        score={studentProfile?.classMarks ?? 0}
                         max={100}
                         label="Class Marks"
                       />
                       <CircularGauge
-                        score={loggedInStudent.yearlyCgpa}
+                        score={studentProfile?.yearlyCgpa ?? 0}
                         max={10}
                         label="Yearly CGPA"
-                        zoneColor={loggedInStudent.yearlyCgpa >= 9.0 ? 'yellow' : undefined}
+                        zoneColor={studentProfile?.yearlyCgpa >= 9.0 ? 'yellow' : undefined}
                       />
                       <CircularGauge
-                        score={loggedInStudent.assignmentSubmitted ? 100 : 0}
+                        score={studentProfile?.assignmentSubmitted ? 100 : 0}
                         max={100}
                         label="Assignment Status"
                       />
