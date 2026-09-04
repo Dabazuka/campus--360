@@ -152,7 +152,12 @@ export default function StudentPortal() {
     { id: 5, title: 'Electronics Assignment submission', date: '2026-09-15', time: '10:00 AM', type: 'Assignment' },
     { id: 6, title: 'Chemistry practical file submission', date: '2026-09-16', time: '9:00 PM', type: 'Practical' },
   ]);
-  const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '', type: 'Theory Exam' });
+  const [newEvent, setNewEvent] = useState({
+    title: '',
+    date: '',
+    time: '',
+    type: 'THEORY_EXAM'
+  });
 
   // --- TEACHER NOTICES STATE ---
   const [notices, setNotices] = useState([
@@ -389,6 +394,10 @@ export default function StudentPortal() {
 
     if (data.user.role === 'STUDENT') {
       setCurrentStudentId('STU-101');
+
+      fetchStudentProfile();
+      fetchStudentSubjects();
+      fetchEvents();
     }
 
     setIsAuthenticated(true);
@@ -400,6 +409,7 @@ export default function StudentPortal() {
 
     if (data.user.role === 'TEACHER') {
       await fetchTeacherStudents();
+      fetchEvents();
     }
 
     setActiveTab('dropout-tracker');
@@ -470,6 +480,36 @@ const fetchStudentSubjects = async () => {
   }
 };
 
+const fetchEvents = async () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) return;
+
+  try {
+    const response = await fetch(
+      'http://localhost:5000/api/events',
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to fetch events');
+      return;
+    }
+
+    console.log('Events from database:', data.events);
+    setEvents(data.events);
+  } catch (error) {
+    console.error('Failed to fetch events:', error);
+  }
+};
+
 const fetchTeacherStudents = async () => {
   const token = localStorage.getItem('token');
 
@@ -519,15 +559,95 @@ setStudentRecords(formattedStudents);
   };
 
   // --- ACADEMIC HANDLERS ---
-  const handleAddEvent = (e) => {
-    e.preventDefault();
-    if (!newEvent.title || !newEvent.date) return;
-    setEvents([...events, { id: Date.now(), ...newEvent }]);
-    setNewEvent({ title: '', date: '', time: '', type: 'Theory Exam' });
-  };
+  const handleAddEvent = async (e) => {
+  e.preventDefault();
 
-  const handleDeleteEvent = (id) => {
+  if (!newEvent.title || !newEvent.date) return;
+
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    console.error('No authentication token found');
+    return;
+  }
+
+  try {
+    const formattedTime = newEvent.time
+      ? new Date(`1970-01-01T${newEvent.time}`).toLocaleTimeString([], {
+          hour: 'numeric',
+          minute: '2-digit'
+        })
+      : '';
+
+    const response = await fetch(
+      'http://localhost:5000/api/events',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...newEvent,
+          time: formattedTime
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to create event');
+      return;
+    }
+
+    console.log('Event created in database:', data.event);
+
+    setEvents([...events, data.event]);
+
+    setNewEvent({
+      title: '',
+      date: '',
+      time: '',
+      type: 'THEORY_EXAM'
+    });
+  } catch (error) {
+    console.error('Failed to create event:', error);
+  }
+};
+
+  const handleDeleteEvent = async (id) => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    console.error('No authentication token found');
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/events/${id}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to delete event');
+      return;
+    }
+
+    console.log('Event deleted from database');
+
     setEvents(events.filter(e => e.id !== id));
+    } catch (error) {
+      console.error('Failed to delete event:', error);
+    }
   };
 
   const handleAddNotice = (e) => {
@@ -1405,15 +1525,22 @@ setStudentRecords(formattedStudents);
                     onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
                     className="p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500"
                   />
+                  <input
+                      type="time"
+                      value={newEvent.time}
+                      onChange={(e) =>
+                      setNewEvent({ ...newEvent, time: e.target.value })
+                    }
+                  />
                   <select
                     value={newEvent.type}
                     onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
                     className="p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500"
                   >
-                    <option value="Theory Exam">Theory Exam</option>
-                    <option value="Practical">Practical</option>
-                    <option value="Viva">Viva</option>
-                    <option value="Assignment">Assignment Submission</option>
+                    <option value="THEORY_EXAM">Theory Exam</option>
+                    <option value="PRACTICAL">Practical</option>
+                    <option value="VIVA">Viva</option>
+                    <option value="ASSIGNMENT">Assignment</option>
                   </select>
                   <button
                     type="submit"
@@ -1435,6 +1562,11 @@ setStudentRecords(formattedStudents);
                         </div>
                         <div>
                           <p className="font-semibold text-slate-900">{evt.title}</p>
+
+                          <p className="text-sm text-slate-500 mt-1">
+                            {evt.time}
+                          </p>
+
                           <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mt-1 ${
                             evt.type === 'Practical' ? 'bg-amber-100 text-amber-800' :
                             evt.type === 'Theory Exam' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800'

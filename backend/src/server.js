@@ -6,6 +6,7 @@ import authRouter from "./routes/auth.js";
 import { authenticateToken } from "./middleware/auth.js";
 import studentRouter from "./routes/student.js";
 import teacherRouter from "./routes/teacher.js";
+import eventRoutes from "./routes/events.js";
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/student", studentRouter);
 app.use("/api/teacher", teacherRouter);
+app.use("/api/events", eventRoutes);
 
 app.get("/", (req, res) => {
     res.json({
