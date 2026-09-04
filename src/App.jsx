@@ -192,24 +192,7 @@ export default function StudentPortal() {
   const [newNotice, setNewNotice] = useState({ title: '', category: 'Hackathon', description: '', urgent: false });
 
   // --- DOUBTS & DISCUSSION STATE ---
-  const [doubts, setDoubts] = useState([
-    {
-      id: 1,
-      student: 'Chitransh V.',
-      subject: 'Chemistry',
-      question: 'Can someone explain the impact of zeolite salt on hardwater?',
-      replies: ['what is hardness of water?', 'Checked standard chapter 4 notes!'],
-      solved: true
-    },
-    {
-      id: 2,
-      student: 'Janvi F.',
-      subject: 'Mechanical',
-      question: 'what are the states of matters?',
-      replies: ['what is plasma in states of matter?'],
-      solved: false
-    }
-  ]);
+  const [doubts, setDoubts] = useState([]);
   const [newDoubt, setNewDoubt] = useState({ subject: 'Mechanical', question: '' });
   const [replyInput, setReplyInput] = useState({});
 
@@ -398,6 +381,8 @@ export default function StudentPortal() {
       fetchStudentProfile();
       fetchStudentSubjects();
       fetchEvents();
+      fetchNotices();
+      fetchDoubts();
     }
 
     setIsAuthenticated(true);
@@ -410,6 +395,7 @@ export default function StudentPortal() {
     if (data.user.role === 'TEACHER') {
       await fetchTeacherStudents();
       fetchEvents();
+      fetchNotices();
     }
 
     setActiveTab('dropout-tracker');
@@ -507,6 +493,67 @@ const fetchEvents = async () => {
     setEvents(data.events);
   } catch (error) {
     console.error('Failed to fetch events:', error);
+  }
+};
+
+const fetchDoubts = async () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) return;
+
+  try {
+    const response = await fetch(
+      'http://localhost:5000/api/doubts',
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to fetch doubts');
+      return;
+    }
+
+    console.log('Doubts from database:', data.doubts);
+    setDoubts(data.doubts);
+
+  } catch (error) {
+    console.error('Failed to fetch doubts:', error);
+  }
+};
+
+const fetchNotices = async () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) return;
+
+  try {
+    const response = await fetch(
+      'http://localhost:5000/api/notices',
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to fetch notices');
+      return;
+    }
+
+    console.log('Notices from database:', data.notices);
+    setNotices(data.notices);
+  } catch (error) {
+    console.error('Failed to fetch notices:', error);
   }
 };
 
@@ -650,36 +697,117 @@ setStudentRecords(formattedStudents);
     }
   };
 
-  const handleAddNotice = (e) => {
-    e.preventDefault();
-    if (!newNotice.title || !newNotice.description) return;
-    setNotices([
-      {
-        id: Date.now(),
-        author: 'Teacher / Faculty Admin',
-        date: 'Just now',
-        ...newNotice
-      },
-      ...notices
-    ]);
-    setNewNotice({ title: '', category: 'Hackathon', description: '', urgent: false });
-  };
+  const handleAddNotice = async (e) => {
+  console.log("HANDLE ADD NOTICE RAN");
 
-  const handleAddDoubt = (e) => {
-    e.preventDefault();
-    if (!newDoubt.question.trim()) return;
-    setDoubts([
-      ...doubts,
+  e.preventDefault();
+
+  if (!newNotice.title || !newNotice.description) return;
+
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    console.error('No authentication token found');
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      'http://localhost:5000/api/notices',
       {
-        id: Date.now(),
-        student: loggedInStudent.name,
-        subject: newDoubt.subject,
-        question: newDoubt.question,
-        replies: [],
-        solved: false
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(newNotice)
       }
-    ]);
-    setNewDoubt({ subject: 'Mechanical', question: '' });
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to create notice');
+      return;
+    }
+
+    console.log('Notice created in database:', data.notice);
+
+    setNotices([data.notice, ...notices]);
+
+    setNewNotice({
+      title: '',
+      category: 'Hackathon',
+      description: '',
+      urgent: false
+    });
+  } catch (error) {
+    console.error('Failed to create notice:', error);
+  }
+};
+
+  const handleAddDoubt = async (e) => {
+  e.preventDefault();
+
+  if (!newDoubt.question.trim()) return;
+
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    console.error('No authentication token found');
+    return;
+  }
+
+  try {
+    console.log("Subjects:", subjects);
+    console.log("Selected subject:", newDoubt.subject);
+
+    const selectedSubject = subjects.find(
+      (subject) =>
+        subject.name === newDoubt.subject ||
+        subject.subjectName === newDoubt.subject
+    );
+
+    if (!selectedSubject) {
+      console.error('Selected subject not found');
+      return;
+    }
+
+    const response = await fetch(
+      'http://localhost:5000/api/doubts',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          studentId: studentProfile.id,
+          subjectId: selectedSubject.id,
+          question: newDoubt.question.trim()
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data.message || 'Failed to create doubt');
+      return;
+    }
+
+    console.log('Doubt created in database:', data.doubt);
+
+    setDoubts([...doubts, data.doubt]);
+
+    setNewDoubt({
+      subject: 'Mechanical',
+      question: ''
+    });
+
+    } catch (error) {
+      console.error('Failed to create doubt:', error);
+    }
   };
 
   const handleAddReply = (doubtId) => {

@@ -134,3 +134,15 @@ model Complaint {
 
   student     Student         @relation(fields: [studentId], references: [id])
 }
+
+model Notice {
+  id          Int      @id @default(autoincrement())
+  title       String
+  category    String
+  description String
+  urgent      Boolean  @default(false)
+  authorId    Int
+  createdAt   TimestamptzString @default(now())
+
+  author      User     @relation(fields: [authorId], references: [id])
+}

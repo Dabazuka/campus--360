@@ -22,6 +22,9 @@ router.get("/subjects", authenticateToken, async (req, res) => {
             })
             .all();
 
+        console.log("Student:", student);
+        console.log("Student Subjects:", studentSubjects);
+
         const subjects = [];
 
         for (const studentSubject of studentSubjects) {
