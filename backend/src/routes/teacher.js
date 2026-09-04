@@ -63,9 +63,6 @@ if (
         message: "Invalid marks or CGPA"
     });
 }
-
-const updatedStudent =
-
         const updatedStudent =
             await db.orm.public.Student
                 .where({ id: studentId })
